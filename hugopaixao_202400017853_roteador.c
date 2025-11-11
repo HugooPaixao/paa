@@ -5,7 +5,7 @@
 typedef struct pac{
   int tamanho;
   int prio;
-  char **dados;
+  char *dados;
 } Pacote;
 
 void trocar(Pacote *x, Pacote *y) {
@@ -60,11 +60,15 @@ void processarEntrada(int total, Pacote pacotes[], FILE *input) { // total de pa
 
     for(int n = 0; n < total; n++) {
         fscanf(input, "%d %d", &pacotes[n].prio, &pacotes[n].tamanho); // tamango do pacote e prioridade
-        pacotes[n].dados = (char**) malloc(pacotes[n].tamanho*sizeof(char*));
 
+        pacotes[n].dados = (char*) malloc(pacotes[n].tamanho*3); // x3 , byte + o '\0'
+
+        char tam[3];
         for(int j = 0; j < pacotes[n].tamanho; j++) {
-            pacotes[n].dados[j] = (char*) malloc(3); // string e o '\0'
-            fscanf(input, "%s", pacotes[n].dados[j]);
+            fscanf(input, "%s", tam);
+            strcat(pacotes[n].dados, tam);
+            if(j < pacotes[n].tamanho-1)
+              strcat(pacotes[n].dados, ",");
         }
     }
 }
@@ -92,23 +96,17 @@ void exibir(int total, Pacote pacotes[], int tam_maximo, FILE *output) {
         Pacote pac[cont];
         for(int i = 0; i < cont; i++) {
             pac[i] = pacotes[capacidade[i]];
-            pac[i].dados = pacotes[capacidade[i]].dados;
         }
 
         heapsort(pac, cont);
 
         // ver esse trecho aqui, ele esta aumentando o tempo
         for(int i = 0; i < cont; i++) {
-            fprintf(output, "|");
-            for(int j = 0; j < pac[i].tamanho; j++) {
-                fprintf(output, "%s", pac[i].dados[j]);
-
-                if(j < pac[i].tamanho-1) fprintf(output, ",");
-            }
+            fprintf(output, "|%s", pac[i].dados);
         }
         fprintf(output, "|");
-        inicio += cont;
 
+        inicio += cont;
         if(inicio < total)
             fprintf(output, "\n");
     }
@@ -135,9 +133,6 @@ int main(int argc, char *argv[]) {
     fclose(output);
 
     for(int i = 0; i < qtdPacotes; i++) {
-        for(int j = 0; j < pacotes[i].tamanho; j++)
-            free(pacotes[i].dados[j]);
-
         free(pacotes[i].dados);
     }
     free(pacotes);
