@@ -234,13 +234,7 @@ int main(int argc, char *argv[]) {
   printf("ARG1 = %s, ARG2 = %s\n", argv[1], argv[2]);
 
   FILE *input = fopen(argv[1], "r");
-
-  if(!input)
-    printf("\nErro ao abrir o arquivo de input\n");
-
   FILE *output = fopen(argv[2], "w");
-  if(!output)
-    printf("\nErro ao abrir o arquivo de output\n");
 
   int nVetores;
   fscanf(input,"%d", &nVetores);
