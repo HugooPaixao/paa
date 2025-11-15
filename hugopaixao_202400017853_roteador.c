@@ -100,7 +100,6 @@ void exibir(int total, Pacote pacotes[], int tam_maximo, FILE *output) {
 
         heapsort(pac, cont);
 
-        // ver esse trecho aqui, ele esta aumentando o tempo
         for(int i = 0; i < cont; i++) {
             fprintf(output, "|%s", pac[i].dados);
         }

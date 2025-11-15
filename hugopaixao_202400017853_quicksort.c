@@ -109,10 +109,10 @@ void quickSortLA(int *v, int i, int j) {
 }
 
 int mediana3(int *v, int i, int j) {
-  int n = j-i+1;
-  int i1 = i+n/4;
-  int i2 = i+n/2;
-  int i3 = i+3*n/4;
+  int n = (j-i)+1;
+  int i1 = i+(n/4);
+  int i2 = i+(n/2);
+  int i3 = i+((3*n)/4);
 
   int v1 =  v[i1];
   int v2 =  v[i2];
@@ -263,7 +263,8 @@ int main(int argc, char *argv[]) {
         fprintf(output, ",");
     }
 
-    fprintf(output, "\n");
+    if(i < nVetores-1) fprintf(output, "\n");
+
 
     free(v);
    }
