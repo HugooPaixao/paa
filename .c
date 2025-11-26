@@ -23,9 +23,12 @@
   /* basicamente é isso aqui, só pensar em como que vai retornar os itens que maximizam,
     até entao só esta retornando o valor que maximiza e depois pensar em como isso vai
     ser lido e escrito mantendo a eficiencia*/ //ok
-  void mochila(int qtdItens, float peso, float volume, Pacotes itens[], int itensMax[]) {
-    int w = (int)(peso*100);
-    int v = (int)(volume*100);
+
+
+  // ver nessa funcao da mochila, acho que deveria receber um tipo carro, sao ajustes para funcionar, eu acho
+  void mochila(int qtdItens, float peso, float volume, Pacotes itens[], int sel[]) {
+    int w = (int)(peso);
+    int v = (int)(volume);
 
     float*** m = (float***)malloc((qtdItens+1)*sizeof(float**));
     for(int i = 0; i <= qtdItens; i++) {
@@ -41,12 +44,11 @@
         for(int k = 0; k <= v; k++) {
           m[i][j][k] = m[i-1][j][k];
 
-          int vol = (int)(itens[i-1].volume*100);
-          int p = (int)(itens[i-1].peso*100);
-          float val = itens[i-1].valor;
+          int vol = (int)(itens[i-1].volume);
+          int p = (int)(itens[i-1].peso);
 
           if((j >= p && k >= vol))
-            m[i][j][k] = max(val+ m[i-1][j-p][k-vol], m[i-1][j][k]);
+            m[i][j][k] = max(itens[i-1].valor+ m[i-1][j-p][k-vol], m[i-1][j][k]);
         }
       }
     }
@@ -54,12 +56,12 @@
     int aux = w, aux2 = v;
     for(int i = qtdItens; i > 0; i--) {
       if(m[i][aux][aux2] != m[i-1][aux][aux2]) {
-        itensMax[i-1] = 1;
-        aux -= (int)(itens[i-1].peso*100);
-        aux2 -= (int)(itens[i-1].volume*100);
+        sel[i-1] = 1;
+        aux -= (int)(itens[i-1].peso);
+        aux2 -= (int)(itens[i-1].volume);
       }
       else
-        itensMax[i-1] = 0;
+        sel[i-1] = 0;
     }
 
     for(int i = 0; i <= qtdItens; i++) {
@@ -83,15 +85,15 @@
     }
   }
 
-  void exibir(Veiculo v, Pacotes p[], int qtd, int sel[],FILE* output) {
+  void exibir(Veiculo v, Pacotes qtdItens[], int qtd, int sel[], int itensMax[], Pacotes p[], int qtdPacotes, FILE* output) {
     float volAcumulado = 0, pesoAcumulado = 0, valAcumulado = 0;
     int itenSel = 0;
 
     for(int i = 0; i < qtd; i++) {
       if(sel[i]) {
-        valAcumulado += p[i].valor;
-        pesoAcumulado += p[i].peso;
-        volAcumulado += p[i].volume;
+        valAcumulado += qtdItens[i].valor;
+        pesoAcumulado += qtdItens[i].peso;
+        volAcumulado += qtdItens[i].volume;
         itenSel = 1;
       }
     }
@@ -100,7 +102,7 @@
       float porcentagemP = (pesoAcumulado/v.peso)*100;
       float porcentagemV = (volAcumulado/v.volume)*100;
 
-      fprintf(output, "[%s]R$%.2f,%.0fKG(%.0f%%),%.0fL(%.0f%%)->" ,v.placa, valAcumulado, v.peso, porcentagemP,v.volume, porcentagemV);
+      fprintf(output, "[%s]R$%.2f,%.0fKG(%.0f%%),%.0fL(%.0f%%)->" ,v.placa, valAcumulado, pesoAcumulado, porcentagemP, volAcumulado, porcentagemV);
 
       // talvez utilizar um merge/ bucket/ radix/ algum algoritmo eficiente de ordenacao aqui pra fazer um busca binaria, se nao bater o tempo
       int virgula = 1;
@@ -109,17 +111,11 @@
           if(!virgula)
             fprintf(output, ",");
 
-          fprintf(output, "%s", p[i].cod);
+          fprintf(output, "%s", qtdItens[i].cod);
           virgula = 0;
         }
       }
       fprintf(output, "\n");
-    }
-    else {
-      for(int i = 0; i < qtd; i++) {
-        if(!p[i].processado)
-          fprintf(output, "PENDENTE:R$%.2f,%.0fKG,%.0fL->%s\n", p[i].valor, p[i].peso, p[i].volume, p[i].cod);
-      }
     }
   }
   int main(int argc,char* argv[]) {
@@ -147,7 +143,7 @@
       Pacotes *qtdItens = malloc(qtdPacotes*sizeof(Pacotes));
       int qtd = 0;
 
-      for(int j = 0; j < qtdPacotes; j++) { // pegando os pacotes pendentes (la ele)
+      for(int j = 0; j < qtdPacotes; j++) { // pegando os pacotes (la ele)
         if(!p[j].processado) {
           qtdItens[qtd] = p[j];
           itensMax[qtd] = j;
@@ -163,11 +159,16 @@
             p[itensMax[k]].processado = 1;
         }
 
-        exibir(v[i], p, qtdPacotes, sel, output);
+        exibir(v[i], qtdItens, qtd, sel, itensMax, p, qtdPacotes, output);
       }
         free(sel);
         free(itensMax);
         free(qtdItens);
+    }
+
+    for(int i = 0; i < qtdPacotes; i++) {
+      if(!p[i].processado)
+        fprintf(output, "PENDENTE:R$%.2f,%.0fKG,%.0fL->%s\n", p[i].valor, p[i].peso, p[i].volume,  p[i].cod);
     }
 
     free(v);
@@ -176,3 +177,5 @@
     fclose(output);
     return 0;
   }
+
+  // pq crlhs deslocou o espaco?
