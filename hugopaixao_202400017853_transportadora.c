@@ -23,13 +23,13 @@ float max(float a, float b) {
 
 
 float*** alocarMatriz(int qtdItens, float peso, float volume) {
-  int w = (int)peso, v = (int)volume;
+  int w = (int)round(peso), v = (int)round(volume);
 
   float*** m = (float***)malloc((qtdItens+1)*sizeof(float**));
   for(int i = 0; i <= qtdItens; i++) {
     m[i] = (float**)malloc((w+1)*sizeof(float*));
     for(int j = 0; j <= w; j++) {
-      m[i][j] = (float*)calloc(v+1, sizeof(float)); // prencher a primeira linha e primeira coluna com 0s
+      m[i][j] = (float*)calloc(v+1, sizeof(float)); // prencher a primeira lihna e primeira coluna com 0s
     }
   }
 
@@ -44,7 +44,7 @@ void mochila(int qtdItens, float peso, float volume, Pacotes itens[], int sel[])
 
   float*** m = alocarMatriz(qtdItens, peso, volume);
 
-  int w = (int)peso, v = (int)volume;
+  int w = (int)round(peso), v = (int)round(volume);
 
   for(int i = 1; i <= qtdItens; i++) {
     for(int j = 0; j <= w; j++) {
@@ -113,7 +113,8 @@ void exibir(Veiculo v, Pacotes qtdItens[], int qtd, int sel[], int itensMax[], P
 
    fprintf(output, "[%s]R$%.2f,%.0fKG(%.0f%%),%.0fL(%.0f%%)->" ,v.placa, valAcumulado, pesoAcumulado, porcentagemP, volAcumulado, porcentagemV);
 
-    // talvez utilizar um merge/ bucket/ quick, algum algoritmo eficiente de ordenacao aqui pra fazer um busca binaria (nao sei pelo oq, e nem sei se dá certo), se nao bater o tempo
+    // talvez utilizar um merge/ bucket/ quick, algum algoritmo eficiente de ordenacao aqui pra fazer um
+    //  busca binaria (nao sei pelo oq, e nem sei se dá certo), se nao bater o tempo
     int virgula = 0; // sepra por virgula  ou n
     for(int i = 0; i < qtd; i++) {
       if(sel[i]) {
