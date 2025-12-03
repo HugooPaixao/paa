@@ -19,7 +19,7 @@ float max(float a, float b) {
     return a;
 
   return b;
-  }
+}
 
 
 float*** alocarMatriz(int qtdItens, float peso, float volume) {
@@ -140,9 +140,9 @@ void exibirPendentes(Pacotes p[], int qtdPacotes, FILE* output) {
 void escreverArquivo(int qtdVeiculos, Veiculo v[], int qtdPacotes, Pacotes p[], FILE* output ) {
 
   for(int i = 0; i < qtdVeiculos; i++) { // pegando os veiculos
-    int *sel = malloc(qtdPacotes*sizeof(int));
-    int *itensMax = malloc(qtdPacotes*sizeof(int));
-    Pacotes *qtdItens = malloc(qtdPacotes*sizeof(Pacotes));
+    int* sel = malloc(qtdPacotes*sizeof(int));
+    int* itensMax = malloc(qtdPacotes*sizeof(int));
+    Pacotes* qtdItens = malloc(qtdPacotes*sizeof(Pacotes));
     int qtd = 0;
 
     for(int j = 0; j < qtdPacotes; j++) { // pegando os pacotes pendentes(la ele)
@@ -181,11 +181,11 @@ int main(int argc,char* argv[]) {
   int qtdVeiculos, qtdPacotes;
 
   fscanf(input, "%d", &qtdVeiculos);
-  Veiculo *v = malloc(qtdVeiculos*sizeof(Veiculo));
+  Veiculo* v = malloc(qtdVeiculos*sizeof(Veiculo));
   processarVeiculos(qtdVeiculos, v, input);
 
   fscanf(input, "%d", &qtdPacotes);
-  Pacotes *p = malloc(qtdPacotes*sizeof(Pacotes));
+  Pacotes* p = malloc(qtdPacotes*sizeof(Pacotes));
   processarPacotes(qtdPacotes, p, input);
 
   escreverArquivo(qtdVeiculos, v, qtdPacotes, p, output);
