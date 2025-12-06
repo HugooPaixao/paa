@@ -51,8 +51,8 @@ void mochila(int qtdItens, float peso, float volume, Pacotes itens[], int sel[])
       for(int k = 0; k <= v; k++) {
         m[i][j][k] = m[i-1][j][k];
 
-        int vol = itens[i-1].volume;
-        int p = itens[i-1].peso;
+        int vol = (int)round(itens[i-1].volume);
+        int p = (int)round(itens[i-1].peso);
 
         if((j >= p && k >= vol))
           m[i][j][k] = max(itens[i-1].valor+ m[i-1][j-p][k-vol], m[i-1][j][k]);
@@ -64,8 +64,8 @@ void mochila(int qtdItens, float peso, float volume, Pacotes itens[], int sel[])
   for(int i = qtdItens; i > 0; i--) {
     if(m[i][aux][aux2] != m[i-1][aux][aux2]) {
       sel[i-1] = 1;
-      aux -= itens[i-1].peso;
-      aux2 -= itens[i-1].volume;
+      aux -= (int)round(itens[i-1].peso);
+      aux2 -= (int)round(itens[i-1].volume);
     }
     else
       sel[i-1] = 0;
@@ -94,27 +94,24 @@ void processarPacotes(int qtdPacotes, Pacotes p[], FILE* input) {
 
 
 // os pendentes nao estao sendo pegos, dps
-void exibir(Veiculo v, Pacotes qtdItens[], int qtd, int sel[], int itensMax[], Pacotes p[], int qtdPacotes, FILE* output) {
+void exibir(Veiculo v, Pacotes qtdItens[], int qtd, int sel[], Pacotes p[], int qtdPacotes, FILE* output) {
   float volAcumulado = 0, pesoAcumulado = 0, valAcumulado = 0;
-  int itenSel = 0;
+  int itemSel = 0;
 
   for(int i = 0; i < qtd; i++) {
     if(sel[i]) {
       valAcumulado += qtdItens[i].valor;
       pesoAcumulado += qtdItens[i].peso;
       volAcumulado += qtdItens[i].volume;
-      itenSel = 1;
+      itemSel = 1;
     }
   }
 
-  if(itenSel) {
+  if(itemSel) {
     float porcentagemP = round((pesoAcumulado/v.peso)*100);
     float porcentagemV = round((volAcumulado/v.volume)*100);
 
    fprintf(output, "[%s]R$%.2f,%.0fKG(%.0f%%),%.0fL(%.0f%%)->" ,v.placa, valAcumulado, pesoAcumulado, porcentagemP, volAcumulado, porcentagemV);
-
-    // talvez utilizar um merge/ bucket/ quick, algum algoritmo eficiente de ordenacao aqui pra fazer um
-    //  busca binaria (nao sei pelo oq, e nem sei se dá certo), se nao bater o tempo
     int virgula = 0; // sepra por virgula  ou n
     for(int i = 0; i < qtd; i++) {
       if(sel[i]) {
@@ -128,13 +125,6 @@ void exibir(Veiculo v, Pacotes qtdItens[], int qtd, int sel[], int itensMax[], P
     fprintf(output, "\n");
   }
 
-}
-
-void exibirPendentes(Pacotes p[], int qtdPacotes, FILE* output) {
-  for(int i = 0; i < qtdPacotes; i++) {
-    if(!p[i].processado)
-      fprintf(output, "PENDENTE:R$%.2f,%.0fKG,%.0fL->%s\n", p[i].valor, p[i].peso, p[i].volume,  p[i].cod);
-  }
 }
 
 void escreverArquivo(int qtdVeiculos, Veiculo v[], int qtdPacotes, Pacotes p[], FILE* output ) {
@@ -160,12 +150,17 @@ void escreverArquivo(int qtdVeiculos, Veiculo v[], int qtdPacotes, Pacotes p[], 
         if(sel[k])
           p[itensMax[k]].processado = 1;
       }
-      exibir(v[i], qtdItens, qtd, sel, itensMax, p, qtdPacotes, output);
+      exibir(v[i], qtdItens, qtd, sel, p, qtdPacotes, output);
     }
 
     free(sel);
     free(itensMax);
     free(qtdItens);
+  }
+
+  for(int i = 0; i < qtdPacotes; i++) {
+    if(!p[i].processado)
+      fprintf(output, "PENDENTE:R$%.2f,%.0fKG,%.0fL->%s\n", p[i].valor, p[i].peso, p[i].volume,  p[i].cod);
   }
 }
 
@@ -189,8 +184,6 @@ int main(int argc,char* argv[]) {
   processarPacotes(qtdPacotes, p, input);
 
   escreverArquivo(qtdVeiculos, v, qtdPacotes, p, output);
-
-  exibirPendentes(p, qtdPacotes, output);
 
   free(v);
   free(p);
