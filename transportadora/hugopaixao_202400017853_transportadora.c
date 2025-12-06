@@ -23,7 +23,7 @@ float max(float a, float b) {
 
 
 float*** alocarMatriz(int qtdItens, float peso, float volume) {
-  int w = (int)round(peso), v = (int)round(volume);
+  int w = (int)roundf(peso), v = (int)roundf(volume);
 
   float*** m = (float***)malloc((qtdItens+1)*sizeof(float**));
   for(int i = 0; i <= qtdItens; i++) {
@@ -44,15 +44,15 @@ void mochila(int qtdItens, float peso, float volume, Pacotes itens[], int sel[])
 
   float*** m = alocarMatriz(qtdItens, peso, volume);
 
-  int w = (int)round(peso), v = (int)round(volume);
+  int w = (int)roundf(peso), v = (int)roundf(volume);
 
   for(int i = 1; i <= qtdItens; i++) {
     for(int j = 0; j <= w; j++) {
       for(int k = 0; k <= v; k++) {
         m[i][j][k] = m[i-1][j][k];
 
-        int vol = (int)round(itens[i-1].volume);
-        int p = (int)round(itens[i-1].peso);
+        int vol = (int)roundf(itens[i-1].volume);
+        int p = (int)roundf(itens[i-1].peso);
 
         if((j >= p && k >= vol))
           m[i][j][k] = max(itens[i-1].valor+ m[i-1][j-p][k-vol], m[i-1][j][k]);
@@ -64,8 +64,8 @@ void mochila(int qtdItens, float peso, float volume, Pacotes itens[], int sel[])
   for(int i = qtdItens; i > 0; i--) {
     if(m[i][aux][aux2] != m[i-1][aux][aux2]) {
       sel[i-1] = 1;
-      aux -= (int)round(itens[i-1].peso);
-      aux2 -= (int)round(itens[i-1].volume);
+      aux -= (int)roundf(itens[i-1].peso);
+      aux2 -= (int)roundf(itens[i-1].volume);
     }
     else
       sel[i-1] = 0;
@@ -108,10 +108,10 @@ void exibir(Veiculo v, Pacotes qtdItens[], int qtd, int sel[], Pacotes p[], int 
   }
 
   if(itemSel) {
-    float porcentagemP = round((pesoAcumulado/v.peso)*100);
-    float porcentagemV = round((volAcumulado/v.volume)*100);
+    int porcentagemP = (int)round((pesoAcumulado/v.peso)*100);
+    int porcentagemV = (int)round((volAcumulado/v.volume)*100);
 
-   fprintf(output, "[%s]R$%.2f,%.0fKG(%.0f%%),%.0fL(%.0f%%)->" ,v.placa, valAcumulado, pesoAcumulado, porcentagemP, volAcumulado, porcentagemV);
+   fprintf(output, "[%s]R$%.2f,%.0fKG(%d%%),%.0fL(%d%%)->" ,v.placa, valAcumulado, pesoAcumulado, porcentagemP, volAcumulado, porcentagemV);
     int virgula = 0; // sepra por virgula  ou n
     for(int i = 0; i < qtd; i++) {
       if(sel[i]) {
