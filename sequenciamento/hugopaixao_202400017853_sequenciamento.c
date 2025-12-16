@@ -169,8 +169,10 @@ int main(int argc, char* argv[]) {
 
     Doenca* ordenar = (Doenca*)malloc(M*sizeof(Doenca));
     counting_sort(d, ordenar, M);
-    exibir(output, d, M);
+
+    exibir(output, ordenar, M);
     liberarMemoria(d, M);
+    free(ordenar);
 
     fclose(input);
     fclose(output);
