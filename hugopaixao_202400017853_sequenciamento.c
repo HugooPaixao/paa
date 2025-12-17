@@ -1,8 +1,7 @@
-   #include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <ctype.h>
 
 typedef struct {
     char cod[10];
@@ -26,9 +25,10 @@ void inserir(int* R, int pos) {
     (*R)++;
 }
 
-void KMP(int* k, int* R, char* T, long long n, char* P, int m) {
+void KMP(int* k, int* R, char* T, char* P) {
+    int n = strlen(T), m = strlen(P);
     calcular_tabela(k, P, m);
-    for (long long i = 0, j = -1; i < n; i++) {
+    for (int i = 0, j = -1; i < n; i++) {
         while (j >= 0 && P[j + 1] != T[i]) j = k[j];
         if (P[j + 1] == T[i]) j++;
         if (j == m - 1) {
@@ -38,67 +38,82 @@ void KMP(int* k, int* R, char* T, long long n, char* P, int m) {
     }
 }
 
-int compararDoencas(const void* a, const void* b) {
-    Doenca* da = (Doenca*)a;
-    Doenca* db = (Doenca*)b;
+void counting_sort(Doenca* A, Doenca* B, int n) {
+    int k = 101; // porcentagem maxima +1
+    int* C = (int*) calloc(k, sizeof(int)); // CORRIGIDO: calloc
 
-    // Ordenar por porcentagem decrescente
-    if (da->porcentagem > db->porcentagem) return -1;
-    if (da->porcentagem < db->porcentagem) return 1;
+    for(int i = 0; i < n; i++)
+        C[A[i].porcentagem]++;
 
-    // Em caso de empate, ordenar pelo índice original (crescente)
-    if (da->idx < db->idx) return -1;
-    if (da->idx > db->idx) return 1;
+    for(int i = 1; i < k; i++)
+        C[i] = C[i] + C[i-1];
 
-    return 0;
+    for(int i = n-1; i >= 0; i--) {
+        B[C[A[i].porcentagem] - 1] = A[i];
+        C[A[i].porcentagem]--;
+    }
+    free(C);
+
+    for(int i = 0; i < n/2; i++) {
+        Doenca temp = B[i];
+        B[i] = B[n-1-i];
+        B[n-1-i] = temp;
+    }
 }
 
-Doenca* processarEntrada(FILE* input, int* K, char** Dna, long long* dna_len, int* M) {
-    fscanf(input, "%d", K);
-    
-    // Pular espaços em branco
-    int c;
-    while ((c = fgetc(input)) != EOF && isspace(c));
-    ungetc(c, input);
-    
-    // Ler DNA dinamicamente
-    long long capacidade = 1024;
-    *Dna = (char*)malloc(capacidade * sizeof(char));
-    if (*Dna == NULL) {
-        perror("Erro ao alocar memória para DNA");
+// NOVA FUNÇÃO: Lê a cadeia de DNA dinamicamente
+char* lerDNA(FILE* input) {
+    int capacidade = 1024;
+    int tamanho = 0;
+    char* dna = (char*)malloc(capacidade);
+
+    if (!dna) {
+        fprintf(stderr, "Erro ao alocar memória para DNA\n");
         exit(1);
     }
-    
-    *dna_len = 0;
-    while ((c = fgetc(input)) != EOF && !isspace(c)) {
-        if (*dna_len >= capacidade - 1) {
-            capacidade *= 2;
-            *Dna = (char*)realloc(*Dna, capacidade * sizeof(char));
-            if (*Dna == NULL) {
-                perror("Erro ao realocar memória para DNA");
+
+    int c;
+    while ((c = fgetc(input)) != EOF && c != '\n' && c != ' ') {
+        if (tamanho >= capacidade - 1) {
+            capacidade += 2;
+            char* temp = (char*)realloc(dna, capacidade);
+            if (!temp) {
+                fprintf(stderr, "Erro ao realocar memória para DNA\n");
+                free(dna);
                 exit(1);
             }
+            dna = temp;
         }
-        (*Dna)[(*dna_len)++] = c;
+        dna[tamanho++] = c;
     }
-    (*Dna)[*dna_len] = '\0';
-    
+    dna[tamanho] = '\0';
+
+    return dna;
+}
+
+Doenca* processarEntrada(FILE* input, int* K, char** Dna, int* M) {
+    fscanf(input, "%d", K);
+    fgetc(input); // Consumir newline
+
+    // CORRIGIDO: Ler DNA dinamicamente
+    *Dna = lerDNA(input);
+
     fscanf(input, "%d", M);
-    
+
     Doenca* d = (Doenca*)malloc((*M) * sizeof(Doenca));
-    
+
     for (int i = 0; i < *M; i++) {
         fscanf(input, "%9s %d", d[i].cod, &d[i].qtdGenes);
         d[i].genes = (char**)malloc(d[i].qtdGenes * sizeof(char*));
         d[i].idx = i;
         d[i].porcentagem = 0;
-        
+
         for (int j = 0; j < d[i].qtdGenes; j++) {
-            d[i].genes[j] = (char*)malloc(1001 * sizeof(char));
+            d[i].genes[j] = (char*)malloc(1001);
             fscanf(input, "%1000s", d[i].genes[j]);
         }
     }
-    
+
     return d;
 }
 
@@ -108,66 +123,62 @@ void exibir(FILE* output, Doenca* d, int M) {
     }
 }
 
-void calcularPorcentagens(Doenca* d, int M, char* Dna, long long dna_len, int K) {
+void calcularPorcentagens(Doenca* d, int M, char* Dna, int K) {
     for (int i = 0; i < M; i++) {
         int genesAtivos = 0;
-        
+
         for (int g = 0; g < d[i].qtdGenes; g++) {
             int tamGene = strlen(d[i].genes[g]);
-            
+
             if (tamGene < K) {
                 char* gene = d[i].genes[g];
-                int m = tamGene;
-                int* ktab = (int*)malloc((m > 0 ? m : 1) * sizeof(int));
+                int ktab[1001];
                 int Rcount = 0;
-                KMP(ktab, &Rcount, Dna, dna_len, gene, m);
-                free(ktab);
+                KMP(ktab, &Rcount, Dna, gene);
                 if (Rcount > 0) {
                     genesAtivos++;
                 }
                 continue;
             }
-            
+
             int* coberto = (int*)calloc(tamGene, sizeof(int));
             int qtdSubcadeias = tamGene - K + 1;
-            
+
             for (int pos = 0; pos < qtdSubcadeias; pos++) {
-                char* sub = (char*)malloc((K + 1) * sizeof(char));
+                char sub[1001];
                 memcpy(sub, d[i].genes[g] + pos, K);
                 sub[K] = '\0';
-                
-                int* ktab = (int*)malloc(K * sizeof(int));
+
+                int ktab[1001];
                 int Rcount = 0;
-                KMP(ktab, &Rcount, Dna, dna_len, sub, K);
-                free(ktab);
-                free(sub);
-                
+                KMP(ktab, &Rcount, Dna, sub);
+
                 if (Rcount > 0) {
                     for (int k = 0; k < K; k++) {
                         coberto[pos + k] = 1;
                     }
                 }
             }
-            
+
             int total = 0;
             for (int p = 0; p < tamGene; p++) {
                 if (coberto[p]) total++;
             }
-            
-            float percentualCoberto = (float)total / (float)tamGene * 100.0;
-            if (percentualCoberto >= 90.0) {
+
+            // CORRIGIDO: nome da variável
+            float porcentagemCoberto = (float)total / (float)tamGene * 100.0;
+            if (porcentagemCoberto >= 90.0) {
                 genesAtivos++;
             }
-            
+
             free(coberto);
         }
-        
+
         d[i].porcentagem = round((100.0 * genesAtivos / d[i].qtdGenes));
     }
 }
 
-void liberarMemoria(Doenca* d, int M, char* Dna) {
-    free(Dna);
+void liberarMemoria(Doenca* d, int M) {
     for (int i = 0; i < M; i++) {
         for (int j = 0; j < d[i].qtdGenes; j++) {
             free(d[i].genes[j]);
@@ -178,36 +189,28 @@ void liberarMemoria(Doenca* d, int M, char* Dna) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        printf("Uso: %s <entrada> <saida>\n", argv[0]);
-        return 1;
-    }
-    
+    printf("#ARGS = %i\n", argc);
+    printf("PROGRAMA = %s\n", argv[0]);
+    printf("ARG1 = %s, ARG2 = %s\n", argv[1], argv[2]);
+
     FILE* input = fopen(argv[1], "r");
-    if (!input) {
-        perror("Erro ao abrir arquivo de entrada");
-        return 1;
-    }
-    
     FILE* output = fopen(argv[2], "w");
-    if (!output) {
-        perror("Erro ao abrir arquivo de saída");
-        fclose(input);
-        return 1;
-    }
-    
+
     int K, M;
-    char* Dna;
-    long long dna_len;
-    
-    Doenca* d = processarEntrada(input, &K, &Dna, &dna_len, &M);
-    calcularPorcentagens(d, M, Dna, dna_len, K);
-    
-    qsort(d, M, sizeof(Doenca), compararDoencas);
-    
-    exibir(output, d, M);
-    liberarMemoria(d, M, Dna);
-    
+    char* Dna = NULL; // CORRIGIDO: Agora é ponteiro
+
+    Doenca* d = processarEntrada(input, &K, &Dna, &M);
+    calcularPorcentagens(d, M, Dna, K);
+
+    Doenca* ordenar = (Doenca*)malloc(M * sizeof(Doenca));
+    counting_sort(d, ordenar, M);
+
+    exibir(output, ordenar, M);
+
+    liberarMemoria(d, M);
+    free(ordenar);
+    free(Dna); // CORRIGIDO: Liberar DNA
+
     fclose(input);
     fclose(output);
     return 0;
