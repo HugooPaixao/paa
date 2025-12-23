@@ -3,154 +3,163 @@
 #include <string.h>
 #include <math.h>
 
-typedef struct {
-    char cod[10];
+typedef struct d {
+    char cod[32];
     char** genes;
     int qtdGenes;
     int porcentagem;
-    int idx;
+    int indice;
 } Doenca;
 
-void calcular_tabela(int* k, char* P, int m) {
-    k[0] = -1;
-    for (int i = 1, j = -1; i < m; i++) {
-        while (j >= 0 && P[j + 1] != P[i]) j = k[j];
-        if (P[j + 1] == P[i]) j++;
-        k[i] = j;
+typedef struct No {
+    char* chave;
+    unsigned long valHash;
+    struct No* prox;
+} No;
+
+No** tabela;
+int TAMANHO_HASH;
+
+unsigned long valCaractere(char c) {
+    return (unsigned long)c;
+}
+
+unsigned long potenciaMod(unsigned long base, int exp, unsigned long mod) {
+    unsigned long resultado = 1;
+    unsigned long b = base % mod;
+    while (exp > 0) {
+        if (exp & 1)
+            resultado = (resultado * b) % mod;
+        b = (b * b) % mod;
+        exp >>= 1;
     }
+    return resultado;
 }
 
-void inserir(int* R, int pos) {
-    (void)pos;
-    (*R)++;
+unsigned long indiceHash(unsigned long h) {
+    return h % TAMANHO_HASH;
 }
 
-void KMP(int* k, int* R, char* T, char* P) {
-    int n = strlen(T), m = strlen(P);
-    calcular_tabela(k, P, m);
-    for (int i = 0, j = -1; i < n; i++) {
-        while (j >= 0 && P[j + 1] != T[i]) j = k[j];
-        if (P[j + 1] == T[i]) j++;
-        if (j == m - 1) {
-            inserir(R, i - m + 1);
-            j = k[j];
+void inserir(const char* s, int K, unsigned long valHash) {
+    unsigned long indice = indiceHash(valHash);
+
+    No* no = (No*)malloc(sizeof(No));
+    no->chave = strndup(s, K);
+    no->valHash = valHash;
+    no->prox = tabela[indice];
+    tabela[indice] = no;
+}
+
+int existeHash(unsigned long valHash, const char* s, int K) {
+    unsigned long indice = indiceHash(valHash);
+    No* no = tabela[indice];
+    while (no) {
+        if (no->valHash == valHash && strncmp(no->chave, s, K) == 0) {
+            return 1;
+        }
+        no = no->prox;
+    }
+    return 0;
+}
+
+void inicializar(int tamanhoDNA, int K) {
+    int numSubs = tamanhoDNA - K + 1;
+    if (numSubs <= 0) {
+        TAMANHO_HASH = 1;
+    } else {
+        TAMANHO_HASH = numSubs * 2 + 1;
+    }
+    tabela = (No**)calloc(TAMANHO_HASH, sizeof(No*));
+}
+
+void liberarHash() {
+    for (int i = 0; i < TAMANHO_HASH; i++) {
+
+        No* no = tabela[i];
+        while (no) {
+            No* tmp = no;
+            no = no->prox;
+            free(tmp->chave);
+            free(tmp);
         }
     }
+
+    free(tabela);
 }
 
-void counting_sort(Doenca* A, Doenca* B , int n) {
-    int k = 101; // porcentagem maxima +1
-    int* C = (int*) caloc(k, sizeof(int));
+void preDNA(const char* DNA, int tamanhoDNA, int K, unsigned long base, unsigned long modulo) {
+    if (tamanhoDNA < K || modulo == 0) return;
 
-    for(int i = 0; i < n; i++)
-        C[A[i].porcentagem]++;
+    unsigned long h = potenciaMod(base, K - 1, modulo);
+    unsigned long t = 0;
 
-    for(int i = 1; i < k; i++)
-        C[i] = C[i]+C[i-1];
-
-    for(int i = n-1; i >= 0; i--) {
-        B[C[A[i].porcentagem] -1] = A[i];
-        C[A[i].porcentagem]--;
-    }
-    free(C);
-
-    for(int i = 0; i < n/2; i++) {
-        Doenca temp = B[i];
-        B[i] = B[n-1-i];
-        B[n-1-i] = temp;
+    for (int i = 0; i < K; i++) {
+        t = (base * t + valCaractere(DNA[i])) % modulo;
     }
 
-}
-Doenca* processarEntrada(FILE* input, int* K, char* Dna, int* M) {
-    fscanf(input, "%d", K);
-    fscanf(input, "%10004s", Dna);
-    fscanf(input, "%d", M);
+    inserir(DNA, K, t);
 
-    Doenca* d = (Doenca*)malloc((*M) * sizeof(Doenca));
-
-    for (int i = 0; i < *M; i++) {
-        fscanf(input, "%9s %d", d[i].cod, &d[i].qtdGenes);
-        d[i].genes = (char**)malloc(d[i].qtdGenes * sizeof(char*));
-        d[i].idx = i;
-        d[i].porcentagem = 0;
-
-        for (int j = 0; j < d[i].qtdGenes; j++) {
-            d[i].genes[j] = (char*)malloc(1001);
-            fscanf(input, "%1000s", d[i].genes[j]);
-        }
-    }
-
-    return d;
-}
-
-void exibir(FILE* output, Doenca* d, int M) {
-    for (int i = 0; i < M; i++) {
-        fprintf(output, "%s->%d%%\n", d[i].cod, d[i].porcentagem);
+    for (int s = 0; s < tamanhoDNA - K; s++) {
+        t = (base * ((t + modulo - (valCaractere(DNA[s]) * h) % modulo) % modulo) + valCaractere(DNA[s + K])) % modulo;
+        inserir(DNA + s + 1, K, t);
     }
 }
 
-void calcularPorcentagens(Doenca* d, int M, char* Dna, int K) {
-    for (int i = 0; i < M; i++) {
-        int genesAtivos = 0;
+int geneAtivo(const char* gene, int K, unsigned long base, unsigned long modulo) {
+    int tamanhoGene = (int)strlen(gene);
+    int numSub = tamanhoGene - K + 1;
 
-        for (int g = 0; g < d[i].qtdGenes; g++) {
-            int tamGene = strlen(d[i].genes[g]);
+    if (numSub <= 0 || modulo == 0) return 0;
 
-            if (tamGene < K) {
-                char* gene = d[i].genes[g];
-                int ktab[1001];
-                int Rcount = 0;
-                KMP(ktab, &Rcount, Dna, gene);
-                if (Rcount > 0) {
-                    genesAtivos++;
-                }
-                continue;
-            }
-
-            int* coberto = (int*)calloc(tamGene, sizeof(int));
-            int qtdSubcadeias = tamGene - K + 1;
-
-            for (int pos = 0; pos < qtdSubcadeias; pos++) {
-                char sub[1001];
-                memcpy(sub, d[i].genes[g] + pos, K);
-                sub[K] = '\0';
-
-                int ktab[1001];
-                int Rcount = 0;
-                KMP(ktab, &Rcount, Dna, sub);
-
-                if (Rcount > 0) {
-                    for (int k = 0; k < K; k++) {
-                        coberto[pos + k] = 1;
-                    }
-                }
-            }
-
-            int total = 0;
-            for (int p = 0; p < tamGene; p++) {
-                if (coberto[p]) total++;
-            }
-
-            float porcentagemualCoberto = (float)total / (float)tamGene * 100.0;
-            if (porcentagemualCoberto >= 90.0) {
-                genesAtivos++;
-            }
-
-            free(coberto);
-        }
-
-        d[i].porcentagem = round((100.0 * genesAtivos / d[i].qtdGenes));
+    unsigned long h = potenciaMod(base, K - 1, modulo);
+    unsigned long t = 0;
+    for (int i = 0; i < K; i++) {
+        t = (base * t + valCaractere(gene[i])) % modulo;
     }
+
+    int encontradas = 0;
+    if (existeHash(t, gene, K))
+        encontradas++;
+
+    for (int s = 0; s < numSub - 1; s++) {
+        t = (base * ((t + modulo - (valCaractere(gene[s]) * h) % modulo) % modulo) + valCaractere(gene[s + K])) % modulo;
+        if (existeHash(t, gene + s + 1, K)) encontradas++;
+    }
+
+    float fracao = (float)encontradas / (float)numSub;
+    return fracao >= 0.90; // >= 90% de semelhnca
 }
 
-void liberarMemoria(Doenca* d, int M) {
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < d[i].qtdGenes; j++) {
-            free(d[i].genes[j]);
-        }
-        free(d[i].genes);
+void countingSort(Doenca* v, int n) {
+    int maxPorcentagem = 0;
+
+    for (int i = 0; i < n; i++) {
+        if (v[i].porcentagem > maxPorcentagem)
+            maxPorcentagem = v[i].porcentagem;
     }
-    free(d);
+
+    int* count = (int*)calloc(maxPorcentagem + 1, sizeof(int));
+    Doenca* saida = (Doenca*)malloc(n * sizeof(Doenca));
+    int* inicio = (int*)malloc((maxPorcentagem + 1) * sizeof(int));
+
+    for (int i = 0; i < n; i++)
+        count[v[i].porcentagem]++;
+
+    int pos = 0;
+    for (int p = maxPorcentagem; p >= 0; p--) {
+        inicio[p] = pos;
+        pos += count[p];
+    }
+
+    for (int i = 0; i < n; i++) {
+        int p = v[i].porcentagem;
+        saida[inicio[p]++] = v[i];
+    }
+
+    for (int i = 0; i < n; i++) v[i] = saida[i];
+    free(count);
+    free(saida);
+    free(inicio);
 }
 
 int main(int argc, char* argv[]) {
@@ -158,21 +167,66 @@ int main(int argc, char* argv[]) {
     printf("PROGRAMA = %s\n", argv[0]);
     printf("ARG1 = %s, ARG2 = %s\n", argv[1], argv[2]);
 
+    unsigned long base = 257; //2^8 +1
+    unsigned long modulo = 1000000009; // primo suficinetemente grande
+
     FILE* input = fopen(argv[1], "r");
     FILE* output = fopen(argv[2], "w");
 
     int K, M;
-    char Dna[10005];
+    fscanf(input, "%d", &K);
 
-    Doenca* d = processarEntrada(input, &K, Dna, &M);
-    calcularPorcentagens(d, M, Dna, K);
+    char buffer[1000001];
+    fscanf(input, "%1000000s", buffer);
+    char* DNA = strdup(buffer);
+    int tamanhoDNA = (int)strlen(DNA);
 
-    Doenca* ordenar = (Doenca*)malloc(M*sizeof(Doenca));
-    counting_sort(d, ordenar, M);
+    fscanf(input, "%d", &M);
+    Doenca* doencas = (Doenca*)malloc(M * sizeof(Doenca));
 
-    exibir(output, ordenar, M);
-    liberarMemoria(d, M);
-    free(ordenar);
+    for (int i = 0; i < M; i++) {
+        fscanf(input, "%s %d", doencas[i].cod, &doencas[i].qtdGenes);
+        doencas[i].genes = (char**)malloc(doencas[i].qtdGenes * sizeof(char*));
+        doencas[i].indice = i;
+        for (int j = 0; j < doencas[i].qtdGenes; j++) {
+            char gene_buffer[1001];
+            fscanf(input, "%1000s", gene_buffer);
+            doencas[i].genes[j] = strdup(gene_buffer);
+        }
+    }
+
+    inicializar(tamanhoDNA, K);
+    preDNA(DNA, tamanhoDNA, K, base, modulo);
+
+    for (int i = 0; i < M; i++) {
+        int ativos = 0;
+        for (int g = 0; g < doencas[i].qtdGenes; g++) {
+            if (geneAtivo(doencas[i].genes[g], K, base, modulo))
+                ativos++;
+        }
+        if (doencas[i].qtdGenes > 0) {
+            doencas[i].porcentagem = (int)round((100.0 * ativos / doencas[i].qtdGenes));
+        } else {
+            doencas[i].porcentagem = 0;
+        }
+    }
+
+    countingSort(doencas, M);
+
+    for (int i = 0; i < M; i++) {
+        fprintf(output, "%s->%d%%\n", doencas[i].cod, doencas[i].porcentagem);
+    }
+
+    for (int i = 0; i < M; i++) {
+        for (int j = 0; j < doencas[i].qtdGenes; j++)
+            free(doencas[i].genes[j]);
+
+        free(doencas[i].genes);
+    }
+
+    free(doencas);
+    free(DNA);
+    liberarHash();
 
     fclose(input);
     fclose(output);
