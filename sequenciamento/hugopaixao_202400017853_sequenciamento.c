@@ -4,7 +4,7 @@
 #include <math.h>
 
 typedef struct d {
-    char cod[32];
+    char cod[9];
     char** genes;
     int qtdGenes;
     int porcentagem;
@@ -64,17 +64,16 @@ int existeHash(unsigned long valHash, const char* s, int K) {
 
 void inicializar(int tamanhoDNA, int K) {
     int numSubs = tamanhoDNA - K + 1;
-    if (numSubs <= 0) {
+    if (numSubs <= 0)
         TAMANHO_HASH = 1;
-    } else {
+    else
         TAMANHO_HASH = numSubs * 2 + 1;
-    }
+
     tabela = (No**)calloc(TAMANHO_HASH, sizeof(No*));
 }
 
 void liberarHash() {
     for (int i = 0; i < TAMANHO_HASH; i++) {
-
         No* no = tabela[i];
         while (no) {
             No* tmp = no;
@@ -88,14 +87,14 @@ void liberarHash() {
 }
 
 void preDNA(const char* DNA, int tamanhoDNA, int K, unsigned long base, unsigned long modulo) {
-    if (tamanhoDNA < K || modulo == 0) return;
+    if (tamanhoDNA < K || modulo == 0)
+        return;
 
     unsigned long h = potenciaMod(base, K - 1, modulo);
     unsigned long t = 0;
 
-    for (int i = 0; i < K; i++) {
+    for (int i = 0; i < K; i++)
         t = (base * t + valCaractere(DNA[i])) % modulo;
-    }
 
     inserir(DNA, K, t);
 
@@ -109,13 +108,13 @@ int geneAtivo(const char* gene, int K, unsigned long base, unsigned long modulo)
     int tamanhoGene = (int)strlen(gene);
     int numSub = tamanhoGene - K + 1;
 
-    if (numSub <= 0 || modulo == 0) return 0;
+    if (numSub <= 0 || modulo == 0)
+        return 0;
 
     unsigned long h = potenciaMod(base, K - 1, modulo);
     unsigned long t = 0;
-    for (int i = 0; i < K; i++) {
+    for (int i = 0; i < K; i++)
         t = (base * t + valCaractere(gene[i])) % modulo;
-    }
 
     int encontradas = 0;
     if (existeHash(t, gene, K))
@@ -123,7 +122,8 @@ int geneAtivo(const char* gene, int K, unsigned long base, unsigned long modulo)
 
     for (int s = 0; s < numSub - 1; s++) {
         t = (base * ((t + modulo - (valCaractere(gene[s]) * h) % modulo) % modulo) + valCaractere(gene[s + K])) % modulo;
-        if (existeHash(t, gene + s + 1, K)) encontradas++;
+        if (existeHash(t, gene + s + 1, K))
+            encontradas++;
     }
 
     float fracao = (float)encontradas / (float)numSub;
@@ -156,7 +156,9 @@ void countingSort(Doenca* v, int n) {
         saida[inicio[p]++] = v[i];
     }
 
-    for (int i = 0; i < n; i++) v[i] = saida[i];
+    for (int i = 0; i < n; i++)
+        v[i] = saida[i];
+
     free(count);
     free(saida);
     free(inicio);
@@ -178,6 +180,7 @@ int main(int argc, char* argv[]) {
 
     char buffer[1000001];
     fscanf(input, "%1000000s", buffer);
+
     char* DNA = strdup(buffer);
     int tamanhoDNA = (int)strlen(DNA);
 
@@ -189,9 +192,9 @@ int main(int argc, char* argv[]) {
         doencas[i].genes = (char**)malloc(doencas[i].qtdGenes * sizeof(char*));
         doencas[i].indice = i;
         for (int j = 0; j < doencas[i].qtdGenes; j++) {
-            char gene_buffer[1001];
-            fscanf(input, "%1000s", gene_buffer);
-            doencas[i].genes[j] = strdup(gene_buffer);
+            char bufferGene[1001];
+            fscanf(input, "%1000s", bufferGene);
+            doencas[i].genes[j] = strdup(bufferGene);
         }
     }
 
@@ -204,18 +207,16 @@ int main(int argc, char* argv[]) {
             if (geneAtivo(doencas[i].genes[g], K, base, modulo))
                 ativos++;
         }
-        if (doencas[i].qtdGenes > 0) {
+        if (doencas[i].qtdGenes > 0)
             doencas[i].porcentagem = (int)round((100.0 * ativos / doencas[i].qtdGenes));
-        } else {
+        else
             doencas[i].porcentagem = 0;
-        }
     }
 
     countingSort(doencas, M);
 
-    for (int i = 0; i < M; i++) {
+    for (int i = 0; i < M; i++)
         fprintf(output, "%s->%d%%\n", doencas[i].cod, doencas[i].porcentagem);
-    }
 
     for (int i = 0; i < M; i++) {
         for (int j = 0; j < doencas[i].qtdGenes; j++)
@@ -230,5 +231,6 @@ int main(int argc, char* argv[]) {
 
     fclose(input);
     fclose(output);
+
     return 0;
 }
