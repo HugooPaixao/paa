@@ -86,7 +86,7 @@ void liberarHash() {
     free(tabela);
 }
 
-void preDNA(const char* DNA, int tamanhoDNA, int K, unsigned long base, unsigned long modulo) {
+void rabinKarp(const char* DNA, int tamanhoDNA, int K, unsigned long base, unsigned long modulo) {
     if (tamanhoDNA < K || modulo == 0)
         return;
 
@@ -98,9 +98,9 @@ void preDNA(const char* DNA, int tamanhoDNA, int K, unsigned long base, unsigned
 
     inserir(DNA, K, t);
 
-    for (int s = 0; s < tamanhoDNA - K; s++) {
-        t = (base * ((t + modulo - (valCaractere(DNA[s]) * h) % modulo) % modulo) + valCaractere(DNA[s + K])) % modulo;
-        inserir(DNA + s + 1, K, t);
+    for (int j = 0; j < tamanhoDNA - K; j++) {
+        t = (base * ((t + modulo - (valCaractere(DNA[j]) * h) % modulo) % modulo) + valCaractere(DNA[j + K])) % modulo;
+        inserir(DNA+j+1, K, t);
     }
 }
 
@@ -199,7 +199,7 @@ int main(int argc, char* argv[]) {
     }
 
     inicializar(tamanhoDNA, K);
-    preDNA(DNA, tamanhoDNA, K, base, modulo);
+    rabinKarp(DNA, tamanhoDNA, K, base, modulo);
 
     for (int i = 0; i < M; i++) {
         int ativos = 0;
