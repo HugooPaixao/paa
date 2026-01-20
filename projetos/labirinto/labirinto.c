@@ -42,21 +42,21 @@ int resolverLabirinto(int linha, int coluna, char tabuleiro[linha][coluna], int 
   tabuleiro[x][y] = 'T'; // um marcador
 
   if(detectarEspaco(linha, coluna, tabuleiro, x, y+1) == 1) {
-    fprintf(output, "D->%d,%d", x, y);
+    fprintf(output, "D->%d,%d|", x, y);
     resolverLabirinto(linha, coluna, tabuleiro, x, y+1, output);
 
     if(bin != 1)
-      fprintf(output, "BT@%d,%d->%d,%d", x, y, x, y+1);
+      fprintf(output, "BT@%d,%d->%d,%d|", x, y, x, y+1);
     else
       return 0;
   }
 
   if(detectarEspaco(linha, coluna, tabuleiro, x+1, y) == 1) {
-    fprintf(output, "F->%d,%d", x, y);
+    fprintf(output, "F->%d,%d|", x, y);
     resolverLabirinto(linha, coluna, tabuleiro, x+1, y, output);
 
     if(bin != 1)
-      fprintf(output, "BT@%d,%d->%d,%d", x, y, x+1, y);
+      fprintf(output, "BT@%d,%d->%d,%d|", x, y, x+1, y);
     else
       return 0;
   }
@@ -66,17 +66,17 @@ int resolverLabirinto(int linha, int coluna, char tabuleiro[linha][coluna], int 
     resolverLabirinto(linha, coluna, tabuleiro, x, y-1, output);
 
     if(bin != 1)
-      fprintf(output, "BT@%d,%d->%d,%d", x, y, x, y-1);
+      fprintf(output, "BT@%d,%d->%d,%d|", x, y, x, y-1);
     else
       return 0;
   }
 
   if(detectarEspaco(linha, coluna, tabuleiro, x-1, y) == 1) {
-    fprintf(output, "T->%d,%d", x, y);
+    fprintf(output, "T->%d,%d|", x, y);
     resolverLabirinto(linha, coluna, tabuleiro, x-1, y, output);
 
     if(bin != 1)
-      fprintf(output, "BT@%d,%d->%d,%d", x, y, x-1, y);
+      fprintf(output, "BT@%d,%d->%d,%d|", x, y, x-1, y);
     else
       return 0;
   }
@@ -94,18 +94,18 @@ int main(int argc, char* argv[]) {
   int qtdLab, linha, coluna, i;
   fscanf(input, "%d", &qtdLab);
 
-  for(i = 0; i < linha; i++) {
-    fscanf(output, "%d", &coluna);
+  for(i = 0; i < qtdLab; i++) {
+    fscanf(input, "%d", &coluna);
     char tabuleiro[linha][coluna];
     Casa casa;
     casa = processarLabirinto(linha, coluna, tabuleiro, casa, input);
     fprintf(output, "L%d:", i);
-    fprintf(output, "INI@%d,%d", linha, coluna);
+    fprintf(output, "INI@%d,%d|", casa.casa1, casa.casa2);
     resolverLabirinto(linha, coluna, tabuleiro, casa.casa1, casa.casa2, output);
       if(bin == 0)
         fprintf(output, "FIM@-,-\n");
       bin = 0;
-  }
+  } // ta com erro na escrita ou leitura, deve ser apenas isso
 
   fclose(input);
   fclose(output);
