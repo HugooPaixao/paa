@@ -12,7 +12,7 @@ typedef struct casa{
 Casa processarLabirinto(int linha, int coluna, char tabuleiro[linha][coluna], Casa qtdCasas, FILE* input) {
   for(int i = 0; i < linha; i++) {
     for(int j = 0; j < coluna; j++) {
-      fscanf(input, &tabuleiro[i][j]);
+      fscanf(input, " %c", &tabuleiro[i][j]);
         if(tabuleiro[i][j] == 'X') {
           qtdCasas.casa1 = i;
           qtdCasas.casa2 = j;
@@ -26,14 +26,14 @@ Casa processarLabirinto(int linha, int coluna, char tabuleiro[linha][coluna], Ca
 int bin;
 
 int detectarEspaco(int linha, int coluna, char tabuleiro[linha][coluna], int x, int y) {
-  if(x >= 0 && x < linha && y = >= 0 && y < coluna && (tabuleiro[x][y] == '0'))
+  if(x >= 0 && x < linha && y >= 0 && y < coluna && (tabuleiro[x][y] == '0'))
     return 1;
 
   return 0;
 }
 
 int resolverLabirinto(int linha, int coluna, char tabuleiro[linha][coluna], int x, int y, FILE* output) {
-  if(tabuleiro[linha][coluna] == '0' && (x == 0 || y == 0 || x == linha-1 || y = coluna-1)) {
+  if(tabuleiro[linha][coluna] == '0' && (x == 0 || y == 0 || x == linha-1 || y == coluna-1)) {
     fprintf(output, "FIM@%d,%d\n", x, y);
     bin = 1;
     return 0;
@@ -76,7 +76,7 @@ int resolverLabirinto(int linha, int coluna, char tabuleiro[linha][coluna], int 
     resolverLabirinto(linha, coluna, tabuleiro, x-1, y, output);
 
     if(bin != 1)
-      fprintf(output, "BT@%d,%d->%d,%d", x, y, x-1, y, output);
+      fprintf(output, "BT@%d,%d->%d,%d", x, y, x-1, y);
     else
       return 0;
   }
@@ -95,13 +95,13 @@ int main(int argc, char* argv[]) {
   fscanf(input, "%d", &qtdLab);
 
   for(i = 0; i < linha; i++) {
-    fscanf(output, "%d", coluna);
+    fscanf(output, "%d", &coluna);
     char tabuleiro[linha][coluna];
     Casa casa;
     casa = processarLabirinto(linha, coluna, tabuleiro, casa, input);
     fprintf(output, "L%d:", i);
-    fprintf(output, "INI@%d,%d", linha);
-    resolverLabirinto(linha, coluna, tabuleiro, casa.casa1, casa.casa2);
+    fprintf(output, "INI@%d,%d", linha, coluna);
+    resolverLabirinto(linha, coluna, tabuleiro, casa.casa1, casa.casa2, output);
       if(bin == 0)
         fprintf(output, "FIM@-,-\n");
       bin = 0;
