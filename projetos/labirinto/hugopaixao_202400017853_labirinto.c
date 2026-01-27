@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 typedef struct casa{
   int casa1;
   int casa2;
@@ -17,7 +16,6 @@ Casa processarLabirinto(int altura, int largura, char tabuleiro[altura][largura]
           qtdCasas.casa1 = i;
           qtdCasas.casa2 = j;
         }
-
     }
   }
   return qtdCasas;
@@ -71,7 +69,6 @@ int resolverLabirinto(int altura, int largura, char tabuleiro[altura][largura], 
 
   return 0;
 }
-
 
 int main(int argc, char* argv[]) {
   printf("#ARGS = %i\n", argc);
