@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <ctype.h>
 
-// Pre-computed lookup tables para mul_gf (Galois Field)
 static uint8_t mul2[256], mul3[256], mul9[256], mulB[256], mulD[256], mulE[256];
 
 void init_mul_tables() {
@@ -66,7 +65,6 @@ static const uint8_t INV_SBOX[256] = {
 // constantes para cada rodada do AES
 static const uint8_t RCON[11] = {0x00,0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80,0x1b,0x36};
 
-// Versão otimizada com lookup table
 static inline uint8_t mul_gf_fast(uint8_t a, uint8_t b) {
     if(b == 0x02) return mul2[a];
     if(b == 0x03) return mul3[a];
@@ -363,7 +361,6 @@ void BigIntSub(BigInt *r, BigInt *a, BigInt *b) {
     r->tam = newtam;
 }
 
-// Otimização: Karatsuba para multiplicação (um pouco mais rápido)
 void BigIntMult(BigInt *r, BigInt *a, BigInt *b) {
     size_t atam = a->tam, btam = b->tam;
     uint8_t *res = calloc(atam+btam, 1);
@@ -454,7 +451,6 @@ void BigIntMultMod(BigInt *r, BigInt *a, BigInt *b, BigInt *m) {
     liberaBigInt(&produto);
 }
 
-// Otimização: exponenciação com windowing (mais rápido)
 void BigIntPotMod(BigInt *r, BigInt *base, BigInt *exp, BigInt *mod) {
     BigInt res, b, e;
 
@@ -512,8 +508,8 @@ size_t hexaParaByte(const char *hex, uint8_t *bytes) {
 void byteParaHex(const uint8_t *bytes, size_t tam, char *hex) {
     for(size_t i=0; i<tam; i++)
         sprintf(hex+2*i, "%02X", bytes[i]);
-    hex[2*tam] = '\0';  // Garante terminação da string
-    fflush(stdout);  // Flush para evitar buffer issues
+    hex[2*tam] = '\0';
+    fflush(stdout);
 }
 
 void removerQuebra(char *s) {
@@ -523,7 +519,6 @@ void removerQuebra(char *s) {
 }
 
 int main(int argc, char *argv[]) {
-    // Inicializar tabelas de Galois Field
     init_mul_tables();
 
     printf("#ARGS = %i\n", argc);
@@ -603,12 +598,12 @@ int main(int argc, char *argv[]) {
 
         }
         else if(strcmp(op, "e") == 0) {
-            char mHex[32768];  // Aumentado de 16384 para mensagens grandes
+            char mHex[32768];
             sscanf(line, "%*s %s", mHex);
 
             int hl = strlen(mHex);
             int al = ((hl+31)/32)*32;
-            char alinharM[32768];  // Aumentado de 16384
+            char alinharM[32768];
             strcpy(alinharM, mHex);
 
             for(int j=hl; j<al; j++)
@@ -616,12 +611,12 @@ int main(int argc, char *argv[]) {
 
             alinharM[al] = '\0';
 
-            uint8_t bytesM[16384], bytesC[16384];  // Aumentado de 8192
+            uint8_t bytesM[16384], bytesC[16384];
             size_t ml = hexaParaByte(alinharM, bytesM);
             size_t cl;
             encriptarAES(bytesM, ml, chaveAES, bytesC, &cl);
 
-            char cHex[32768];  // Aumentado de 8192
+            char cHex[32768];
             byteParaHex(bytesC, cl, cHex);
             fprintf(output, "c=%s\n", cHex);
         }
