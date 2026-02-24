@@ -194,7 +194,7 @@ class Fiscalizar{
   }
 }
 
-public class hugopaixao_202400017853_porto {
+public class Porto {
   public static void main(String[] args) {
     try {
       System.out.println("#ARGS = " + args.length);
